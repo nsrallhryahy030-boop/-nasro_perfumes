@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>عطور الجزائر - لوحة التحكم الخاصة</title>
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI',sans-serif}
+        body{background:#f8f9fa;color:#333;line-height:1.6}
+        .container{max-width:1200px;margin:0 auto;padding:0 15px}
+        
+        /* حماية اللوحة */
+        .login-modal{display:flex;align-items:center;justify-content:center;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.8);z-index:20000}
+        .login-box{background:white;padding:2rem;border-radius:20px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,0.3);max-width:400px;width:90%}
+        .login-box h2{margin-bottom:1.5rem;color:#667eea}
+        .login-box input{width:100%;padding:12px;margin-bottom:1rem;border:2px solid #eee;border-radius:10px;font-size:1rem}
+        .login-btn{background:linear-gradient(45deg,#667eea,#764ba2);color:white;border:none;padding:12px 30px;border-radius:10px;cursor:pointer;font-size:1.1rem;font-weight:500;width:100%;margin-top:1rem}
+        
+        /* لوحة التحكم */
+        .admin-panel{display:none;background:white;border-radius:20px;padding:2rem;margin:2rem auto;max-width:1000px;box-shadow:0 20px 60px rgba(0,0,0,0.1)}
+        .admin-panel.active{display:block;animation:slideDown 0.5s ease}
+        @keyframes slideDown{from{transform:translateY(-50px);opacity:0}to{transform:translateY(0);opacity:1}}
+        .admin-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:2rem;padding-bottom:1rem;border-bottom:3px solid #667eea}
+        .admin-header h1{font-size:2.2rem;color:#667eea}
+        .toggle-admin{position:fixed;top:20px;left:20px;background:linear-gradient(45deg,#667eea,#764ba2);color:white;border:none;padding:15px;border-radius:15px;cursor:pointer;font-size:1.1rem;box-shadow:0 10px 30px rgba(102,126,234,0.4);z-index:10000;transition:all 0.3s}
+        .toggle-admin:hover{transform:scale(1.05) rotate(5deg)}
+        .admin-section{margin-bottom:3rem;padding:2rem;background:#f8faff;border-radius:15px;border-left:5px solid #667eea}
+        .admin-section h2{font-size:1.6rem;color:#333;margin-bottom:1.5rem;display:flex;align-items:center;gap:10px}
+        .form-group{margin-bottom:1.5rem}
+        .form-group label{display:block;margin-bottom:0.5rem;font-weight:600;color:#555;font-size:1.1rem}
+        .form-group input,.form-group textarea,.form-group select{width:100%;padding:15px;border:2px solid #eee;border-radius:12px;font-size:1.1rem;transition:all 0.3s;box-shadow:0 2px 10px rgba(0,0,0,0.05)}
+        .form-group input:focus,.form-group textarea:focus,.form-group select:focus{outline:none;border-color:#667eea;transform:translateY(-2px);box-shadow:0 5px 20px rgba(102,126,234,0.2)}
+        .btn-save{background:linear-gradient(45deg,#4CAF50,#45a049);color:white;border:none;padding:15px 35px;border-radius:12px;cursor:pointer;font-size:1.1rem;font-weight:600;transition:all 0.3s;box-shadow:0 5px 15px rgba(76,175,80,0.3)}
+        .btn-save:hover{transform:translateY(-3px);box-shadow:0 10px 25px rgba(76,175,80,0.4)}
+        .btn-danger{background:linear-gradient(45deg,#ff4757,#ff3838);color:white;border:none;padding:12px 25px;border-radius:10px;cursor:pointer;font-weight:500;margin-left:1rem}
+        .products-list{display:grid;gap:1.5rem;margin-top:1.5rem}
+        .product-item{padding:1.5rem;background:#f0f8ff;border-radius:15px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:15px;border-right:4px solid #667eea;box-shadow:0 5px 15px rgba(0,0,0,0.1)}
+        .delete-product{color:#ff4757;cursor:pointer;font-size:1.4rem;font-weight:bold;transition:transform 0.3s}
+        .delete-product:hover{transform:scale(1.3)}
+        .success-msg{background:#4CAF50;color:white;padding:1rem;border-radius:10px;margin:1rem 0;text-align:center;font-weight:500;display:none}
+        
+        /* المتجر */
+        .store{display:block}
+        .navbar{background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);padding:1rem 0;position:fixed;top:0;width:100%;z-index:1000;box-shadow:0 5px 20px rgba(0,0,0,0.2)}
+        .nav-container{max-width:1200px;margin:0 auto;padding:0 20px;display:flex;justify-content:space-between;align-items:center}
+        .logo h2{color:white;font-size:1.6rem}
+        .cart-icon{position:relative;color:white;font-size:1.8rem;cursor:pointer;transition:transform 0.3s}
+        .cart-icon:hover{transform:scale(1.2)}
+        #cartCount{position:absolute;top:-10px;right:-10px;background:#ff4757;color:white;border-radius:50%;width:25px;height:25px;font-size:0.9rem;display:flex;align-items:center;justify-content:center;font-weight:bold}
+        .hero{background:linear-gradient(rgba(0,0,0,0.7),rgba(0,0,0,0.7)),url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 600"><rect fill="%23667eea" width="1200" height="600"/><circle fill="%23ffffff" opacity="0.1" cx="300" cy="200" r="150"/><circle fill="%23ffffff" opacity="0.05" cx="900" cy="400" r="200"/></svg>');height:100vh;display:flex;align-items:center;justify-content:center;text-align:center;color:white;margin-top:70px}
+        .hero-content h1{font-size:3.5rem;margin-bottom:1rem;text-shadow:0 5px 15px rgba(0,0,0,0.5)}
+        .hero-content p{font-size:1.3rem;margin-bottom:2rem}
+        .cta-btn{background:linear-gradient(45deg,#ff6b6b,#feca57);color:white;border:none;padding:18px 50px;font-size:1.2rem;border-radius:50px;cursor:pointer;font-weight:600;transition:all 0.3s;box-shadow:0 10px 30px rgba(255,107,107,0.4)}
+        .cta-btn:hover{transform:scale(1.05)}
+        .products{padding:120px 0 80px}
+        .products h2{text-align:center;font-size:3rem;margin-bottom:4rem;color:#333;text-shadow:0 2px 10px rgba(0,0,0,0.1)}
+        .filters{display:flex;justify-content:center;gap:1.5rem;margin-bottom:4rem;flex-wrap:wrap}
+        .filter-btn{padding:15px 35px;border:3px solid #667eea;background:white;color:#667eea;border-radius:30px;cursor:pointer;font-weight:600;font-size:1.1rem;transition:all 0.3s;box-shadow:0 5px 15px rgba(0,0,0,0.1)}
+        .filter-btn.active,.filter-btn:hover{background:#667eea;color:white;transform:translateY(-3px)}
+        .products-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:3rem}
+        .product-card{background:white;border-radius:25px;overflow:hidden;box-shadow:0 20px 40px rgba(0,0,0,0.15);transition:all 0.4s;cursor:pointer}
+        .product-card:hover{transform:translateY(-15px) scale(1.02);box-shadow:0 30px 60px rgba(0,0,0,0.25)}
+        .product-image{height:260px;background:linear-gradient(45deg,#f093fb 0%,#f5576c 100%);display:flex;align-items:center;justify-content:center;font-size:5rem;color:rgba(255,255,255,0.9)}
+        .product-info{padding:2.5rem;text-align:center}
+        .product-info h3{font-size:1.5rem;margin-bottom:1rem;color:#333;font-weight:700}
+        .product-price{font-size:2rem;font-weight:900;color:#ff6b6b;margin:1.5rem 0;text-shadow:0 2px 5px rgba(255,107,107,0.3)}
+        .add-to-cart{width:100%;background:linear-gradient(45deg,#667eea,#764ba2);color:white;border:none;padding:18px;border-radius:15px;font-size:1.2rem;cursor:pointer;font-weight:700;transition:all 0.3s}
+        .add-to-cart:hover{background:linear-gradient(45deg,#5a67d8,#6b46c1);transform:scale(1.05)}
+        .modal{display:none;position:fixed;z-index:2000;left:0;top:0;width:100%;height:100%;background:rgba(0,0,0,0.6);backdrop-filter:blur(10px)}
+        .modal-content{background:white;margin:5% auto;padding:3rem;border-radius:25px;width:95%;max-width:600px;max-height:90vh;overflow-y:auto;box-shadow:0 30px 80px rgba(0,0,0,0.4)}
+        .close{position:absolute;right:25px;top:20px;font-size:2.5rem;cursor:pointer;color:#999;font-weight:300;transition:color 0.3s}
+        .close:hover{color:#333}
+        .cart-item{padding:1.5rem;border-bottom:2px solid #f0f0f0;display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem}
+        .cart-total{padding:2rem 0;text-align:center;border-top:3px solid #667eea;margin-top:2rem}
+        .cart-total h3{font-size:1.8rem;color:#333;font-weight:700}
+        .checkout-form input,.checkout-form select{width:100%;padding:15px;margin-bottom:1.5rem;border:2px solid #eee;border-radius:12px;font-size:1.1rem;box-shadow:0 3px 10px rgba(0,0,0,0.05)}
+        .order-btn{width:100%;background:#25D366;color:white;border:none;padding:20px;border-radius:15px;font-size:1.3rem;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:15px;font-weight:700;transition:all 0.3s;box-shadow:0 10px 30px rgba(37,211,102,0.4)}
+        .order-btn:hover{background:#128C7E;transform:translateY(-3px)}
+        .notification{position:fixed;top:120px;right:30px;background:#25D366;color:white;padding:20px 30px;border-radius:20px;display:flex;align-items:center;gap:15px;box-shadow:0 15px 40px rgba(37,211,102,0.4);z-index:3000;font-weight:600;font-size:1.1rem;animation:slideIn 0.5s ease}
+        .notification.hidden{display:none}
+        @keyframes slideIn{from{transform:translateX(100%);opacity:0}to{transform:translateX(0);opacity:1}}
+        footer{background:linear-gradient(135deg,#333,#555);color:white;text-align:center;padding:3rem 0}
+        @media(max-width:768px){.admin-panel{margin:1rem 0;padding:1.5rem}.toggle-admin{top:15px;left:15px;padding:12px;font-size:1rem}.hero-content h1{font-size:2.5rem}.products-grid{grid-template-columns:1fr;gap:2rem}}
+    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <!-- شاشة تسجيل الدخول -->
+    <div class="login-modal" id="loginModal">
+        <div class="login-box">
+            <h2><i class="fas fa-shield-alt"></i> لوحة التحكم الخاصة</h2>
+            <p style="color:#666;margin-bottom:2rem">أدخل إيميلك للدخول</p>
+            <input type="email" id="adminEmail" placeholder="nsrallhryahy030@gmail.com" value="nsrallhryahy030@gmail.com">
+            <button class="login-btn" onclick="loginAdmin()">
+                <i class="fas fa-sign-in-alt"></i> دخول الآن
+            </button>
+            <p style="margin-top:1.5rem;color:#999;font-size:0.9rem">محمي بإيميلك فقط 👤</p>
+        </div>
+    </div>
+
+    <!-- لوحة التحكم -->
+    <button class="toggle-admin" id="adminToggle" onclick="checkLogin()" title="لوحة التحكم الخاصة">
+        <i class="fas fa-crown"></i> الإدارة
+    </button>
+
+    <div class="admin-panel" id="adminPanel">
+        <div class="admin-header">
+            <h1><i class="fas fa-crown"></i> لوحة التحكم الكاملة</h1>
+            <div>
+                <span style="color:#4CAF50;font-weight:600">مرحباً مدير 👑</span>
+                <button class="btn-danger" onclick="logout()">خروج <i class="fas fa-sign-out-alt"></i></button>
+            </div>
+        </div>
+
+        <div id="successMsg" class="success-msg"></div>
+
+        <!-- رقم الواتساب -->
+        <div class="admin-section">
+            <h2><i class="fab fa-whatsapp"></i> رقم الواتساب الخاص بك</h2>
+            <div class="form-group">
+                <label>رقمك (بدون 0 أو + مثال: 213771234567)</label>
+                <input type="tel" id="whatsappNumber" placeholder="213771234567">
+            </div>
+            <button class="btn-save" onclick="saveWhatsApp()">💾 حفظ الرقم</button>
+        </div>
+
+        <!-- المنتجات -->
+        <div class="admin-section">
+            <h2><i class="fas fa-boxes"></i> المنتجات (أضف/عدّل/احذف)</h2>
+            <div class="form-group">
+                <label>اسم العطر</label>
+                <input type="text" id="productName" placeholder="كريد أفينتوس">
+            </div>
+            <div class="form-group">
+                <label>الوصف</label>
+                <textarea id="productDesc" placeholder="عطر رجالي فاخر..." rows="3"></textarea>
+            </div>
+            <div class="form-group">
+                <label>السعر (دج)</label>
+                <input type="number" id="productPrice" placeholder="8500">
+            </div>
+            <div class="form-group">
+                <label>النوع</label>
+                <select id="productCategory">
+                    <option value="men">رجالي 👔</option>
+                    <option value="women">نسائي 👗</option>
+                </select>
+            </div>
+            <button class="btn-save" onclick="addProduct()">➕ إضافة عطر جديد</button>
+            <div class="products-list" id="productsList"></div>
+            <button class="btn-danger" onclick="clearAllProducts()" style="margin-top:1.5rem">🗑️ حذف كل المنتجات</button>
+        </div>
+
+        <!-- التوصيل -->
+        <div class="admin-section">
+            <h2><i class="fas fa-truck"></i> أسعار التوصيل لكل ولاية</h2>
+            <div class="form-group">
+                <label>الجزائر</label>
+                <input type="number" id="deliveryAlger" value="500" min="0">
+            </div>
+            <div class="form-group">
+                <label>وهران</label>
+                <input type="number" id="deliveryOran" value="800" min="0">
+            </div>
+            <div class="form-group">
+                <label>قسنطينة</label>
+                <input type="number" id="deliveryConstantine" value="700" min="0">
+            </div>
+            <button class="btn-save" onclick="saveDelivery()">🚚 حفظ أسعار التوصيل</button>
+        </div>
+    </div>
+
+    <!-- المتجر -->
+    <div class="store">
+        <!-- نفس كود المتجر السابق مع تحسينات -->
+        <nav class="navbar">
+            <div class="nav-container">
+                <div class="logo">
+                    <h2><i class="fas fa-spray-can"></i> عطور الجزائر</h2>
+                </div>
+                <div class="cart-icon" id="cartIcon" title="سلة المشتريات">
+                    <i class="fas fa-shopping-cart"></i>
+                    <span id="cartCount">0</span>
+                </div>
+            </div>
+        </nav>
+
+        <section class="hero" id="home">
+            <div class="hero-content">
+                <h1>🏆 أجود العطور الرجالية والنسائية</h1>
+                <p>✅ توصيل لجميع ولايات الجزائر<br>✅ دفع عند الاستلام فقط<br>✅ ضمان الأصلية 100%</p>
+                <button class="cta-btn" onclick="scrollToProducts()">ابدأ التسوق الآن</button>
+            </div>
+        </section>
+
+        <section id="products" class="products">
+            <div class="container">
+                <h2>🌟 تشكيلتنا المختارة</h2>
+                <div class="filters">
+                    <button class="filter-btn active" data-category="all">الكل</button>
+                    <button class="filter-btn" data-category="men">رجالي</button>
+                    <button class="filter-btn" data-category="women">نسائي</button>
+                </div>
+                <div class="products-grid" id="productsGrid"></div>
+            </div>
+        </section>
+
+        <footer>
+            <div class="container">
+                <p>© 2024 عطور الجزائر | جميع الحقوق محفوظة | <strong>الدفع عند الاستلام</strong></p>
+            </div>
+        </footer>
+    </div>
+
+    <!-- السلة -->
+    <div id="cartModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeCart()">&times;</span>
+            <h2><i class="fas fa-shopping-cart"></i> سلة المشتريات</h2>
+            <div id="cartItems"></div>
+            <div class="cart-total">
+                <h3>الإجمالي: <span id="cartTotal">0</span> دج</h3>
+            </div>
+            <div class="checkout-form">
+                <h3>📍 بيانات الطلب</h3>
+                <select id="wilaya"></select>
+                <input type="text" id="address" placeholder="العنوان الكامل">
+                <input type="text" id="name" placeholder="الاسم واللقب">
+                <input type="tel" id="phone" placeholder="رقم الهاتف">
+                <button id="placeOrder" class="order-btn">
+                    إرسال الطلب للواتساب <i class="fab fa-whatsapp"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="notification" class="notification hidden">
+        <i class="fas fa-check-circle"></i>
+        <span>✅ تم إرسال الطلب بنجاح للواتساب!</span>
+    </div>
+
+    <script>
+        // إعدادات الموقع
+        let settings = JSON.parse(localStorage.getItem('perfumeSettings')) || {
+            whatsapp: '213771234567',
+            products: [
+                {id:1,name:'كريد أفينتوس',desc:'عطر رجالي فاخر بنكهة الفواكه',price:8500,category:'men'},
+                {id:2,name:'شانيل 5',desc:'عطر نسائي كلاسيكي أنيق',price:9200,category:'women'},
+                {id:3,name:'ديور سافيدج',desc:'رجالي قوي وجذاب',price:7800,category:'men'}
+            ],
+            delivery: {الجزائر:500,وهران:800,قسنطينة:700,عنابة:900}
+        };
+        let cart = JSON.parse(localStorage.getItem('cart')) || [];
+        let isAdminLoggedIn = localStorage.getItem('adminLoggedIn') === 'true';
+
+        // التحقق من تسجيل الدخول
+        function checkLogin() {
+            if (isAdminLoggedIn) {
+                toggleAdmin();
+            } else {
+                document.getElementById('loginModal').style.display = 'flex';
+            }
+        }
+
+        // تسجيل الدخول
+        function loginAdmin() {
+            const email = document.getElementById('adminEmail').value;
+            if (email === 'nsrallhryahy030@gmail.com') {
+                isAdminLoggedIn = true;
+                localStorage.setItem('adminLoggedIn', 'true');
+                document.getElementById('loginModal').style.display = 'none';
+                toggleAdmin();
+                showSuccess('✅ مرحباً مدير! لديك التحكم الكامل');
+            } else {
+                alert('❌ إيميل غير صحيح!');
+            }
+        }
+
+        // الخروج
+        function logout() {
+            isAdminLoggedIn = false;
+            localStorage.removeItem('adminLoggedIn');
+            document.getElementById('adminPanel').classList.remove('active');
+            document.getElementById('adminToggle').style.display = 'block';
+        }
+
+        // باقي الوظائف (نفس الكود السابق مع تحسينات)
+        function toggleAdmin() {
+            document.getElementById('adminPanel').classList.toggle('active');
+        }
+
+        function showSuccess(msg) {
+            const msgEl = document.getElementById('successMsg');
+            msgEl.textContent = msg;
+            msgEl.style.display = 'block';
+            setTimeout(() => msgEl.style.display = 'none', 3000);
+        }
+
+        function saveWhatsApp() {
+            settings.whatsapp = document.getElementById('whatsappNumber').value;
+            localStorage.setItem('perfumeSettings', JSON.stringify(settings));
+            showSuccess('✅ تم حفظ رقم الواتساب');
+        }
+
+        function addProduct() {
+            const newProduct = {
+                id: Date.now(),
+                name: document.getElementById('productName').value,
+                desc: document.getElementById('productDesc').value,
+                price: parseInt(document.getElementById('productPrice').value),
+                category: document.getElementById('productCategory').value
+            };
+            if (!newProduct.name || !newProduct.price) return showSuccess('⚠️ أدخل اسم وسعر صحيحين');
+            
+            settings.products.push(newProduct);
+            localStorage.setItem('perfumeSettings', JSON.stringify(settings));
+            displayProducts();
+            displayAdminProducts();
+            document.getElementById('productName').value = '';
+            showSuccess('✅ تم إضافة العطر الجديد');
+        }
+
+        // باقي الوظائف كما هي...
+        function displayProducts() {
+            document.getElementById('productsGrid').innerHTML = settings.products.map(p => `
+                <div class="product-card" data-category="${p.category}">
+                    <div class="product-image">${p.category==='men'?'👔':'👗'}</div>
+                    <div class="product-info">
+                        <h3>${p.name}</h3>
+                        <p>${p.desc}</p>
+                        <div class="product-price">${p.price.toLocaleString()} دج</div>
+                        <button class="add-to-cart" onclick="addToCart(${p.id})">أضف للسلة</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function displayAdminProducts() {
+            document.getElementById('productsList').innerHTML = settings.products.map(p => `
+                <div class="product-item">
+                    <div>
+                        <strong style="font-size:1.2rem">${p.name}</strong><br>
+                        <span>${p.price.toLocaleString()} دج - ${p.category === 'men' ? 'رجالي' : 'نسائي'}</span>
+                    </div>
+                    <i class="fas fa-trash delete-product" onclick="deleteProduct(${p.id})" title="حذف"></i>
+                </div>
+            `).join('');
+        }
+
+        function deleteProduct(id) {
+            if (confirm('هل أنت متأكد؟')) {
+                settings.products = settings.products.filter(p => p.id !== id);
+                localStorage.setItem('perfumeSettings', JSON.stringify(settings));
+                displayProducts();
+                displayAdminProducts();
+                showSuccess('✅ تم الحذف');
+            }
+        }
+
+        function clearAllProducts() {
+            if (confirm('حذف كل المنتجات؟')) {
+                settings.products = [];
+                localStorage.setItem('perfumeSettings', JSON.stringify(settings));
+                displayProducts();
+                displayAdminProducts();
+                showSuccess('✅ تم حذف كل المنتجات');
+            }
+        }
+
+        function saveDelivery() {
+            settings.delivery = {
+                الجزائر: parseInt(document.getElementById('deliveryAlger').value),
+                وهران: parseInt(document.getElementById('deliveryOran').value),
+                قسنطينة: parseInt(document.getElementById('deliveryConstantine').value)
+            };
+            localStorage.setItem('perfumeSettings', JSON.stringify(settings));
+            setupWilayas();
+            showSuccess('✅ تم حفظ أسعار التوصيل');
+        }
+
+        // سلة المشتريات ووظائف المتجر (مختصرة)
+        function addToCart(id) {
+            const product = settings.products.find(p => p.id === id);
+            const cartItem = cart.find(item => item.id === id);
+            if (cartItem) cartItem.quantity++;
+            else cart.push({...product, quantity: 1});
+            localStorage.setItem('cart', JSON.stringify(cart));
+            updateCartCount();
+            showNotification();
+        }
+
+        function updateCartCount() {
+            document.getElementById('cartCount').textContent = cart.reduce((sum, i) => sum + (i.quantity || 0), 0);
+        }
+
+        function setupWilayas() {
+            document.getElementById('wilaya').innerHTML = Object.entries(settings.delivery).map(([w,p]) => 
+                `<option value="${w}">${w} (${p} دج)</option>`).join('');
+        }
+
+        function scrollToProducts() { document.getElementById('products').scrollIntoView({behavior:'smooth'}); }
+        function closeCart() { document.getElementById('cartModal').style.display = 'none'; }
+        function showNotification() { 
+            const n = document.getElementById('notification'); 
+            n.classList.remove('hidden'); 
+            setTimeout(() => n.classList.add('hidden'), 3000); 
+        }
+
+        // تشغيل
+        window.onload = () => {
+            loadSettings();
+            if (isAdminLoggedIn) document.getElementById('adminToggle').style.background = '#4CAF50';
+        };
+
+        function loadSettings() {
+            document.getElementById('whatsappNumber').value = settings.whatsapp;
+            document.getElementById('deliveryAlger').value = settings.delivery.الجزائر || 500;
+            document.getElementById('deliveryOran').value = settings.delivery.وهران || 800;
+            document.getElementById('deliveryConstantine').value = settings.delivery.قسنطينة || 700;
+            displayProducts();
+            displayAdminProducts();
+            setupWilayas();
+            updateCartCount();
+            setupFilters();
+        }
+
+        function setupFilters() {
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.onclick = () => {
+                    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    const cat = btn.dataset.category;
+                    document.querySelectorAll('.product-card').forEach((card, i) => {
+                        card.style.display = (cat === 'all' || card.dataset.category === cat) ? 'block' : 'none';
+                    });
+                };
+            });
+        }
+
+        document.getElementById('cartIcon').onclick = () => {
+            const itemsEl = document.getElementById('cartItems');
+            const totalEl = document.getElementById('cartTotal');
+            if (cart.length === 0) {
+                itemsEl.innerHTML = '<p style="text-align:center;color:#999;font-size:1.2rem;padding:2rem">🛒 السلة فارغة<br>ابدأ التسوق الآن!</p>';
+                totalEl.textContent = '0';
+            } else {
+                itemsEl.innerHTML = cart.map(i => `
+                    <div class="cart-item">
+                        <div>
+                            <h4>${i.name}</h4>
+                            <p>${i.price.toLocaleString()} دج × ${i.quantity}</p>
+                        </div>
+                        <strong>${(i.price * i.quantity).toLocaleString()} دج</strong>
+                    </div>
+                `).join('');
+                totalEl.textContent = cart.reduce((sum, i) => sum + (i.price * i.quantity), 0).toLocaleString();
+            }
+            document.getElementById('cartModal').style.display = 'block';
+        };
+
+        document.getElementById('placeOrder').onclick = () => {
+            const wilaya = document.getElementById('wilaya').value;
+            const address = document.getElementById('address').value;
+            const name = document.getElementById('name').value;
+            const phone = document.getElementById('phone').value;
+            
+            if (!wilaya || !address || !name || !phone || cart.length === 0) {
+                return alert('⚠️ يجب ملء جميع البيانات');
+            }
+            
+            const subtotal = cart.reduce((sum, i) => sum + (i.price * i.quantity), 0);
+            const deliveryFee = settings.delivery[wilaya];
+            const total = subtotal + deliveryFee;
+            
+            const message = `🏪 *طلب جديد من عطور الجزائر*
+
+👤 ${name}
+📱 ${phone}
+📍 ${wilaya} - ${address}
+
+🛒 *الطلبات:*
+${cart.map(i => `• ${i.name} (${i.category === 'men' ? 'رجالي' : 'نسائي'}) ×${i.quantity} = ${(i.price*i.quantity).toLocaleString()} دج`).join('\n')}
+
+💰 المجموع الفرعي: ${subtotal.toLocaleString()} دج
+🚚 تكلفة التوصيل: ${deliveryFee} دج
+💵 *الإجمالي: ${total.toLocaleString()} دج*
+
+⏰ ${new Date().toLocaleString('ar-DZ')}`;
+
+            window.open(`https://wa.me/${settings.whatsapp}?text=${encodeURIComponent(message)}`, '_blank');
+            
+            cart = [];
+            localStorage.setItem('cart', JSON.stringify(cart));
+            closeCart();
+            updateCartCount();
+        };
+    </script>
+</body>
+</html>
